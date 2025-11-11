@@ -1,4 +1,4 @@
-import { GoogleGenAI, Modality } from "@google/genai";
+import { GoogleGenAI, Modality, Type } from "@google/genai";
 
 const API_KEY = process.env.API_KEY;
 
@@ -55,5 +55,52 @@ export async function editImage(
         }
     }
     throw new Error("Failed to generate image. Please check the console for details.");
+  }
+}
+
+export async function recognizeObjects(
+  base64ImageData: string,
+  mimeType: string
+): Promise<string[]> {
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: {
+        parts: [
+          {
+            inlineData: {
+              data: base64ImageData,
+              mimeType: mimeType,
+            },
+          },
+          {
+            text: "Analyze the image of the product. Identify the main object, its category, and key visual attributes (e.g., color, material). Provide a list of 5-7 concise, relevant tags. For example, for an image of red running shoes, tags could be ['shoes', 'sneakers', 'running shoes', 'red', 'sportswear']. Return only a JSON array of strings.",
+          },
+        ],
+      },
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.STRING,
+            description: "A descriptive tag for the product in the image.",
+          },
+        },
+      },
+    });
+
+    const jsonText = response.text.trim();
+    const tags = JSON.parse(jsonText);
+
+    if (!Array.isArray(tags) || !tags.every(t => typeof t === 'string')) {
+      throw new Error("API returned an invalid tag format.");
+    }
+    
+    return tags;
+
+  } catch (error) {
+    console.error("Error calling Gemini API for object recognition:", error);
+    throw new Error("Failed to recognize objects in the image.");
   }
 }
