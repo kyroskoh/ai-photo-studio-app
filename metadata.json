@@ -1,0 +1,5 @@
+{
+  "name": "AI Photo Studio",
+  "description": "An application to remove backgrounds and clean up product photos by typing instructions, powered by Gemini 2.5 Flash Image.",
+  "requestFramePermissions": []
+}
